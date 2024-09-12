@@ -6,7 +6,6 @@ import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.comment.repository.CommentRepository;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
-import org.example.expert.domain.common.exception.ServerException;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.entity.User;
@@ -16,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
+    private static final Logger log = LoggerFactory.getLogger(CommentServiceTest.class);
     @Mock
     private CommentRepository commentRepository;
     @Mock
@@ -59,7 +61,7 @@ class CommentServiceTest {
         CommentSaveRequest request = new CommentSaveRequest("contents");
         AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
         User user = User.fromAuthUser(authUser);
-        Todo todo = new Todo("title", "title", "contents", user);
+        Todo todo = new Todo("title", "contents", "weather", user);     // Todo 객체가 생성될 때 자동으로 해당 user를 manager로 추가한다.
         Comment comment = new Comment(request.getContents(), user, todo);
 
         given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
@@ -70,5 +72,26 @@ class CommentServiceTest {
 
         // then
         assertNotNull(result);
+    }
+
+    @Test
+    public void comment를_등록시_manager가_아니면_에러발생(){
+        // given
+        long todoId = 1;
+        CommentSaveRequest request = new CommentSaveRequest("contents");
+        AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
+        AuthUser manager = new AuthUser(2L, "email", UserRole.USER);
+        User user = User.fromAuthUser(authUser);
+        Todo todo = new Todo("title", "contents", "weather", user);
+
+        given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
+
+        // when
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            commentService.saveComment(manager, todoId, request);
+        });
+
+        // then
+        assertEquals("해당 일정의 담당자가 아닙니다.", exception.getMessage());
     }
 }

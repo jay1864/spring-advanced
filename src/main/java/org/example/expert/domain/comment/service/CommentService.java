@@ -32,6 +32,12 @@ public class CommentService {
         Todo todo = todoRepository.findById(todoId).orElseThrow(() ->
                 new InvalidRequestException("Todo not found"));
 
+        boolean isManager = todo.getManagers().stream()
+                .anyMatch(manager -> manager.getUser().getId().equals(user.getId()));
+        if (!isManager) {
+            throw new InvalidRequestException("해당 일정의 담당자가 아닙니다.");
+        }
+
         Comment newComment = new Comment(
                 commentSaveRequest.getContents(),
                 user,
