@@ -1,6 +1,7 @@
 package org.example.expert.aop;
 
 import org.example.expert.domain.comment.entity.Comment;
+import org.example.expert.domain.comment.repository.CommentRepository;
 import org.example.expert.domain.comment.service.CommentAdminService;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.user.dto.request.UserRoleChangeRequest;
@@ -22,12 +23,17 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 @ExtendWith(OutputCaptureExtension.class)
 class AccessLogAspectTest {
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @InjectMocks
     private UserAdminService userAdminService;
@@ -66,5 +72,6 @@ class AccessLogAspectTest {
 
         //then
         assertThat(output.getOut().contains("::: Comment ID : {}, Title : {}, Content : {}"));
+        verify(commentRepository, times(1)).deleteById(1L);
     }
 }
