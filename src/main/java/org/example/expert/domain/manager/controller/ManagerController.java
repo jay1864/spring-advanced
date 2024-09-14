@@ -41,15 +41,10 @@ public class ManagerController {
 
     @DeleteMapping("/todos/{todoId}/managers/{managerId}")
     public void deleteManager(
-            HttpServletRequest request,
+            @Auth AuthUser authUser,
             @PathVariable long todoId,
             @PathVariable long managerId
     ) {
-        Long userId = (Long) request.getAttribute("userId");    // HttpServletRequest에서 userId 얻기
-        // userId가 없을 경우
-        if (userId == null) {
-            throw new InvalidRequestException("인증된 사용자 정보가 없습니다.");
-        }
-        managerService.deleteManager(userId, todoId, managerId);
+        managerService.deleteManager(authUser, todoId, managerId);
     }
 }
